@@ -1,0 +1,18 @@
+{
+  "name": "internal-skills",
+  "owner": {
+    "name": "An Tran"
+  },
+  "metadata": {
+    "description": "A collection of Claude Code skills",
+    "pluginRoot": "./skills"
+  },
+  "plugins": [
+    {
+      "name": "capture-skill",
+      "source": "./skills/capture-skills",
+      "description": "Capture learnings, patterns, or workflows from the current conversation into a new or existing skill. Use when the user wants to save what was learned, discovered, or built during a conversation as a reusable skill for future sessions.",
+      "strict": false
+    }
+  ]
+}
