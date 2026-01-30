@@ -1,13 +1,19 @@
 {
-  "name": "internal-skills",
+  "name": "skills-marketplace",
   "owner": {
-    "name": "An Tran"
+    "name": "Skills Team"
   },
   "metadata": {
     "description": "A collection of Claude Code skills",
     "pluginRoot": "./skills"
   },
   "plugins": [
+    {
+      "name": "app-creator",
+      "source": "./skills/app-creator",
+      "description": "Creates new iOS/macOS app projects with a professional architecture using Tuist for project management, modular Swift packages (Core, UI, Features), and a thin app shell. Includes Unit, UI, and Snapshot tests, CI scripts, Fastlane configuration, SwiftFormat, and AGENTS.md/CLAUDE.md for AI agent guidance. Use when the user wants to create a new iOS app project, scaffold a new app, or set up a new Swift project with best practices.",
+      "strict": false
+    },
     {
       "name": "capture-skill",
       "source": "./skills/capture-skills",
