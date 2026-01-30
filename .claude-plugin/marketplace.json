@@ -19,6 +19,16 @@
       "source": "./skills/capture-skills",
       "description": "Capture learnings, patterns, or workflows from the current conversation into a new or existing skill. Use when the user wants to save what was learned, discovered, or built during a conversation as a reusable skill for future sessions.",
       "strict": false
+    },
+    {
+      "name": "generate-implementation-plan",
+      "source": "./skills/generate-implementation-plan",
+      "description": "Convert a PRD into a milestone-based implementation plan with task checkboxes, scoped file edits, tests, and automated acceptance criteria. Use when asked to create or update a PRD-to-plan task file.",
+      "strict": false,
+      "version": "\"1.0\"",
+      "author": {
+        "name": "local"
+      }
     }
   ]
 }
