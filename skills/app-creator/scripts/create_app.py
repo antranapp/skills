@@ -30,7 +30,7 @@ def sanitize_name(name: str) -> str:
     return ''.join(word.capitalize() for word in parts)
 
 
-def create_directory_structure(base_path: Path, app_name_safe: str):
+def create_directory_structure(base_path: Path):
     """Create the project directory structure."""
     dirs = [
         "Sources/App",
@@ -49,7 +49,9 @@ def create_directory_structure(base_path: Path, app_name_safe: str):
         "Tests/FeaturesTests",
         "Tests/SnapshotTests",
         "fastlane/metadata/en-US",
+        "fastlane/metadata/testflight",
         "scripts/ci",
+        "ci_scripts",
     ]
 
     for dir_path in dirs:
@@ -584,15 +586,20 @@ fastlane/test_output
 *.xcresult
 ''',
 
-        # AGENTS.md - placed in current working directory (root)
+        # AGENTS.md
         "AGENTS.md": '''# AGENTS.md
 
 ## Project Summary
 {{APP_NAME}} is a native iOS/macOS app built with SwiftUI and a modular architecture.
 
 ## Project Structure
-- **Root (this directory)**: Contains AGENTS.md, CLAUDE.md
-- **{{APP_NAME_SAFE}}/**: Project subfolder with all source code, tests, and configuration
+All project files are at the repository root (flat structure for Xcode Cloud compatibility):
+- `Project.swift`, `Tuist.swift` - Tuist configuration
+- `Sources/` - App, Core, UI, Features modules
+- `Tests/` - Unit, UI, and Snapshot tests
+- `scripts/ci/` - CI helper scripts
+- `ci_scripts/` - Xcode Cloud scripts
+- `fastlane/` - Deployment automation
 
 ## Architecture (high level)
 - Modular app with a thin app shell and separate layers for domain logic, UI, and features.
@@ -607,9 +614,8 @@ fastlane/test_output
 
 ## Build & Run
 - Requirements: macOS 14+, Xcode 15+, iOS 17+, Tuist 4.x, SwiftFormat, xcbeautify (optional)
-- Navigate to project: `cd {{APP_NAME_SAFE}}`
 - Generate workspace: `tuist generate`
-- Open: `{{APP_NAME_SAFE}}.xcworkspace`
+- Open: `open {{APP_NAME_SAFE}}.xcworkspace`
 - Build (CLI): `xcodebuild -scheme {{APP_NAME_SAFE}} -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build`
 - **Code Signing**: Automatic signing is pre-configured. Set your `DEVELOPMENT_TEAM` in Project.swift if not already set.
 
@@ -617,9 +623,6 @@ fastlane/test_output
 
 ### Running Unit Tests (iOS)
 ```bash
-# Navigate to project directory first
-cd {{APP_NAME_SAFE}}
-
 # Use the CI script
 ./scripts/ci/run_tests.sh
 
@@ -634,7 +637,6 @@ xcodebuild test \\
 
 ### Running Unit Tests (macOS)
 ```bash
-cd {{APP_NAME_SAFE}}
 ./scripts/ci/run_tests_macos.sh
 ```
 
@@ -646,7 +648,7 @@ cd {{APP_NAME_SAFE}}
 - `{{APP_NAME_SAFE}}UITests` - End-to-end UI tests
 - `SnapshotTests` - Visual regression tests
 
-### CI Helper Scripts (inside {{APP_NAME_SAFE}}/)
+### CI Helper Scripts
 - `scripts/ci/run_tests.sh` - Run iOS unit tests
 - `scripts/ci/run_tests_macos.sh` - Run macOS unit tests
 - `scripts/ci/run_ui_tests.sh` - Run UI tests
@@ -654,17 +656,18 @@ cd {{APP_NAME_SAFE}}
 - `scripts/ci/verify_build_macos.sh` - Verify macOS build
 - `scripts/ci/verify_format.sh` - Verify code formatting
 - `scripts/ci/verify_tuist_generate.sh` - Verify Tuist generation
+- `scripts/ci/deploy_testflight.sh` - Deploy to TestFlight
+- `ci_scripts/ci_post_clone.sh` - Xcode Cloud post-clone script (installs Tuist, generates workspace)
 
 ## Formatting
-- SwiftFormat config: `{{APP_NAME_SAFE}}/.swiftformat`
-- Format: `cd {{APP_NAME_SAFE}} && swiftformat Sources Tests`
-- Lint: `cd {{APP_NAME_SAFE}} && swiftformat --lint Sources Tests`
+- SwiftFormat config: `.swiftformat`
+- Format: `swiftformat Sources Tests`
+- Lint: `swiftformat --lint Sources Tests`
 
 ## Guidance for Agents
 - Keep logic in `Core` and UI in `UI`/`Features`; App target should remain thin.
 - Prefer protocol-based dependencies and pure functions for testability.
 - **NEVER auto-commit or push to GitHub.** Only commit and push when the user explicitly requests it.
-- Source code is in the `{{APP_NAME_SAFE}}/` subfolder.
 
 ## Axiom Skills Reference
 Use these Axiom skills when working on this project:
@@ -699,7 +702,7 @@ Use these Axiom skills when working on this project:
 - `/axiom:axiom-app-store-connect-ref` - App Store Connect reference
 ''',
 
-        # README.md - placed in project subfolder
+        # README.md
         "README.md": '''# {{APP_NAME}}
 
 A native iOS/macOS app built with SwiftUI and modular architecture.
@@ -715,47 +718,47 @@ A native iOS/macOS app built with SwiftUI and modular architecture.
 
 ## Quick Start
 
-1. Navigate to this directory (if not already here):
-   ```bash
-   cd {{APP_NAME_SAFE}}
-   ```
-
-2. Generate the Xcode workspace:
+1. Generate the Xcode workspace:
    ```bash
    tuist generate
    ```
 
-3. Open the workspace:
+2. Open the workspace:
    ```bash
    open {{APP_NAME_SAFE}}.xcworkspace
    ```
 
-4. Build and run!
+3. Build and run!
 
 ## Project Structure
 
+All project files are at the repository root (flat structure for Xcode Cloud compatibility):
+
 ```
-../                     # Parent directory (root)
-├── AGENTS.md           # AI agent instructions
-├── CLAUDE.md           # Symlink to AGENTS.md
-└── {{APP_NAME_SAFE}}/  # This directory (project source code)
-    ├── Project.swift
-    ├── Tuist.swift
-    ├── README.md       # This file
-    ├── Sources/
-    │   ├── App/        # Thin app shell (DI only)
-    │   ├── Core/       # Domain logic, models, services
-    │   ├── UI/         # Reusable UI components
-    │   └── Features/   # Feature modules
-    ├── Tests/
-    │   ├── AppTests/       # App integration tests
-    │   ├── CoreTests/      # Core module tests
-    │   ├── UITests/        # UI component tests
-    │   ├── FeaturesTests/  # Feature tests
-    │   ├── AppUITests/     # End-to-end UI tests
-    │   └── SnapshotTests/  # Visual regression tests
-    ├── fastlane/           # Deployment automation
-    └── scripts/ci/         # CI scripts
+./                          # Repository root
+├── AGENTS.md               # AI agent instructions
+├── CLAUDE.md -> AGENTS.md  # Symlink for Claude Code
+├── Project.swift           # Tuist project definition
+├── Tuist.swift             # Tuist configuration
+├── README.md               # This file
+├── .swiftformat            # Code formatting rules
+├── .gitignore              # Git ignore patterns
+├── Sources/
+│   ├── App/                # Thin app shell (DI only)
+│   ├── Core/               # Domain logic, models, services
+│   ├── UI/                 # Reusable UI components
+│   └── Features/           # Feature modules
+├── Tests/
+│   ├── AppTests/           # App integration tests
+│   ├── CoreTests/          # Core module tests
+│   ├── UITests/            # UI component tests
+│   ├── FeaturesTests/      # Feature tests
+│   ├── AppUITests/         # End-to-end UI tests
+│   └── SnapshotTests/      # Visual regression tests
+├── fastlane/               # Deployment automation
+├── scripts/ci/             # CI helper scripts
+└── ci_scripts/             # Xcode Cloud scripts
+    └── ci_post_clone.sh    # Post-clone setup (Tuist install + generate)
 ```
 
 ## Development
@@ -799,13 +802,67 @@ Automatic signing is pre-configured for all targets. Once you set your `DEVELOPM
 - `fastlane ios test` - Run all unit tests
 - `fastlane ios build` - Build for simulator
 - `fastlane ios build_release` - Build release archive
-- `fastlane ios beta` - Push to TestFlight
+- `fastlane ios beta` - Push to TestFlight (with version bump)
+- `fastlane ios beta_quick` - Quick TestFlight upload (no version bump)
 - `fastlane ios release` - Push to App Store
 
 #### macOS
 - `fastlane mac test` - Run macOS unit tests
 - `fastlane mac build` - Build for macOS
 - `fastlane mac build_release` - Build release archive
+
+#### Version Management
+- `fastlane ios bump_build` - Increment build number (uses latest TestFlight build + 1)
+- `fastlane ios set_version version:1.2.3` - Set marketing version
+
+### TestFlight Deployment
+
+Deploy to TestFlight with automatic version management:
+
+```bash
+# Full deployment: run tests, bump build number, build, upload with changelog
+fastlane ios beta
+
+# Quick deploy: just build and upload (no version bump, no tests)
+fastlane ios beta_quick
+
+# Skip tests but still bump version
+fastlane ios beta skip_tests:true
+
+# Deploy to specific beta groups
+fastlane ios beta groups:"Internal,Beta Testers"
+```
+
+**Changelog**: Edit `fastlane/metadata/testflight/release_notes.txt` before deploying.
+The changelog will be automatically included in TestFlight.
+
+**CI Script**: Use `./scripts/ci/deploy_testflight.sh` for CI/CD pipelines.
+
+## Xcode Cloud
+
+This project is configured for Xcode Cloud with a flat structure (all project files at repository root).
+
+### Automatic Setup
+
+The `ci_scripts/ci_post_clone.sh` script runs automatically after Xcode Cloud clones the repository:
+1. Installs Tuist via Homebrew
+2. Runs `tuist install` to fetch dependencies
+3. Runs `tuist generate` to create the Xcode workspace
+
+### Setting Up Xcode Cloud
+
+1. Open your project in Xcode
+2. Go to **Product → Xcode Cloud → Create Workflow**
+3. Sign in to App Store Connect
+4. Configure your workflow (build, test, deploy)
+5. Xcode Cloud will automatically detect and run `ci_scripts/ci_post_clone.sh`
+
+### CI Scripts Location
+
+Xcode Cloud requires CI scripts in a `ci_scripts/` folder at the repository root:
+- `ci_post_clone.sh` - Runs after clone (installs Tuist, generates workspace)
+- Add `ci_pre_xcodebuild.sh` for pre-build tasks
+- Add `ci_post_xcodebuild.sh` for post-build tasks
 
 ## License
 
@@ -833,6 +890,7 @@ APP_SCHEME_RELEASE = "{{APP_NAME_SAFE}}-Release"
 MACOS_SCHEME = "{{APP_NAME_SAFE}}-macOS"
 METADATA_PATH = File.join(PROJECT_ROOT, "fastlane", "metadata")
 SCREENSHOTS_PATH = File.join(PROJECT_ROOT, "fastlane", "screenshots")
+TESTFLIGHT_NOTES_PATH = File.join(PROJECT_ROOT, "fastlane", "metadata", "testflight", "release_notes.txt")
 DEFAULT_METADATA_LOCALE = "en-US"
 
 # Ensure Tuist workspace exists
@@ -857,6 +915,13 @@ def app_store_connect_api_key_if_configured
     key_filepath: key_path,
     duration: 1200
   )
+end
+
+# Read TestFlight changelog if available
+def testflight_changelog
+  return nil unless File.exist?(TESTFLIGHT_NOTES_PATH)
+  content = File.read(TESTFLIGHT_NOTES_PATH).strip
+  content.empty? ? nil : content
 end
 
 platform :ios do
@@ -915,8 +980,85 @@ platform :ios do
     )
   end
 
-  desc "Push a new beta build to TestFlight"
-  lane :beta do
+  # ============================================================
+  # Version Management
+  # ============================================================
+
+  desc "Increment build number based on latest TestFlight build"
+  lane :bump_build do
+    app_store_connect_api_key_if_configured
+
+    latest = latest_testflight_build_number(
+      app_identifier: CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+    )
+    new_build = latest + 1
+    UI.message("Incrementing build number: #{latest} → #{new_build}")
+
+    increment_build_number(
+      build_number: new_build,
+      xcodeproj: Dir.glob("#{PROJECT_ROOT}/*.xcodeproj").first
+    )
+  end
+
+  desc "Set marketing version (e.g., fastlane ios set_version version:1.2.3)"
+  lane :set_version do |options|
+    version = options[:version]
+    UI.user_error!("Missing version parameter. Usage: fastlane ios set_version version:1.2.3") unless version
+
+    increment_version_number(
+      version_number: version,
+      xcodeproj: Dir.glob("#{PROJECT_ROOT}/*.xcodeproj").first
+    )
+    UI.success("Version set to #{version}")
+  end
+
+  # ============================================================
+  # TestFlight Deployment
+  # ============================================================
+
+  desc "Push a new beta build to TestFlight (bumps build number, builds, uploads with changelog)"
+  desc "Options: skip_tests:true, bump:false, groups:'Internal,Beta Testers'"
+  lane :beta do |options|
+    ensure_workspace
+    clean_build_artifacts
+    clear_derived_data
+
+    # Run tests unless skipped
+    unless options[:skip_tests]
+      test_unit
+    end
+
+    # Bump build number unless explicitly disabled
+    unless options[:bump] == false
+      bump_build
+    end
+
+    build_app(
+      workspace: WORKSPACE_FILE,
+      scheme: APP_SCHEME_RELEASE,
+      export_xcargs: "-allowProvisioningUpdates"
+    )
+
+    # Prepare upload options
+    upload_options = {}
+
+    # Add changelog if available
+    changelog = testflight_changelog
+    if changelog
+      upload_options[:changelog] = changelog
+      UI.message("Using changelog from #{TESTFLIGHT_NOTES_PATH}")
+    end
+
+    # Add beta groups if specified
+    if options[:groups]
+      upload_options[:groups] = options[:groups].split(",").map(&:strip)
+    end
+
+    upload_to_testflight(upload_options)
+  end
+
+  desc "Quick TestFlight upload (no version bump, no tests - just build and upload)"
+  lane :beta_quick do
     ensure_workspace
     clean_build_artifacts
     clear_derived_data
@@ -926,8 +1068,13 @@ platform :ios do
       scheme: APP_SCHEME_RELEASE,
       export_xcargs: "-allowProvisioningUpdates"
     )
+
     upload_to_testflight
   end
+
+  # ============================================================
+  # App Store Release
+  # ============================================================
 
   desc "Push a new release build to App Store"
   lane :release do
@@ -1022,6 +1169,25 @@ gem 'fastlane-plugin-versioning'
 ''',
 
         "fastlane/metadata/en-US/keywords.txt": '''app,ios,macos
+''',
+
+        # TestFlight metadata
+        "fastlane/metadata/testflight/release_notes.txt": '''## What's New
+
+- Bug fixes and performance improvements
+
+## Known Issues
+
+- None
+''',
+
+        "fastlane/metadata/testflight/what_to_test.txt": '''Please test the following:
+
+1. App launch and basic navigation
+2. Core feature functionality
+3. Any areas mentioned in release notes
+
+Report issues via TestFlight feedback or contact the development team.
 ''',
 
         # CI Scripts
@@ -1323,6 +1489,77 @@ else
     exit 1
 fi
 ''',
+
+        "scripts/ci/deploy_testflight.sh": '''#!/bin/bash
+# Deploy to TestFlight
+#
+# Usage:
+#   ./scripts/ci/deploy_testflight.sh              # Full deploy (bump + tests + upload)
+#   ./scripts/ci/deploy_testflight.sh --quick      # Quick deploy (just build and upload)
+#   ./scripts/ci/deploy_testflight.sh --skip-tests # Skip tests but bump version
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+cd "$PROJECT_ROOT"
+
+echo "=== Deploying to TestFlight ==="
+
+# Parse arguments
+LANE="beta"
+LANE_OPTIONS=""
+
+for arg in "$@"; do
+    case $arg in
+        --quick)
+            LANE="beta_quick"
+            ;;
+        --skip-tests)
+            LANE_OPTIONS="skip_tests:true"
+            ;;
+    esac
+done
+
+# Run the appropriate lane
+if [ -n "$LANE_OPTIONS" ]; then
+    bundle exec fastlane ios "$LANE" "$LANE_OPTIONS"
+else
+    bundle exec fastlane ios "$LANE"
+fi
+
+echo "=== TestFlight deployment complete ==="
+''',
+
+        # Xcode Cloud Scripts
+        "ci_scripts/ci_post_clone.sh": '''#!/bin/bash
+# Xcode Cloud Post-Clone Script
+# This script runs automatically after Xcode Cloud clones the repository.
+# It installs Tuist and generates the Xcode workspace.
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+echo "=== Xcode Cloud Post-Clone Script ==="
+cd "$PROJECT_ROOT"
+
+# Install Tuist via Homebrew
+echo "Installing Tuist..."
+brew tap tuist/tuist
+brew install --formula tuist
+
+# Install dependencies and generate workspace
+echo "Installing Tuist dependencies..."
+tuist install
+
+echo "Generating Xcode workspace..."
+tuist generate --no-open
+
+echo "=== Post-clone setup complete ==="
+''',
     }
 
 
@@ -1340,26 +1577,26 @@ def create_project(
     name_safe = sanitize_name(name)
     org_name = organization if organization else name
 
-    # Root path is the output directory (where AGENTS.md and CLAUDE.md go)
+    # Flat structure - all project files at root (output directory)
     root_path = Path(output_dir)
-    # Project path is inside a subfolder named after the project
-    project_path = root_path / name_safe
+    project_path = root_path  # Flat structure - no subfolder
 
-    if project_path.exists():
-        print(f"Error: Directory already exists: {project_path}")
+    # Check if key project files already exist
+    key_files = [project_path / "Project.swift", project_path / "Tuist.swift"]
+    if any(f.exists() for f in key_files):
+        print(f"Error: Project files already exist in: {project_path}")
         sys.exit(1)
 
     print(f"Creating project: {name}")
     print(f"  Safe name: {name_safe}")
     print(f"  Identifier: {identifier}")
-    print(f"  Root (AGENTS.md location): {root_path.absolute()}")
-    print(f"  Project subfolder: {project_path.absolute()}")
+    print(f"  Project directory: {project_path.absolute()}")
 
-    # Ensure root path exists
-    root_path.mkdir(parents=True, exist_ok=True)
+    # Ensure project path exists
+    project_path.mkdir(parents=True, exist_ok=True)
 
-    # Create directory structure inside project subfolder
-    create_directory_structure(project_path, name_safe)
+    # Create directory structure (flat - all at project root)
+    create_directory_structure(project_path)
 
     # Prepare replacements
     import datetime
@@ -1377,34 +1614,27 @@ def create_project(
     # Get templates and write files
     templates = get_templates()
 
-    # Files that go in the root directory (not project subfolder)
-    root_files = {"AGENTS.md"}
-
     for template_path, content in templates.items():
         # Substitute placeholders
         final_content = substitute_template(content, replacements)
 
-        # Determine target path based on file type
-        if template_path in root_files:
-            # AGENTS.md goes in the root directory
-            actual_path = root_path / template_path
-        elif template_path == "Sources/App/App.swift":
-            # Handle special file paths
+        # Determine target path (flat structure - all files at project root)
+        if template_path == "Sources/App/App.swift":
+            # Rename App.swift to {AppName}App.swift
             actual_path = project_path / f"Sources/App/{name_safe}App.swift"
         else:
-            # All other files go in the project subfolder
             actual_path = project_path / template_path
 
         # Write file
         actual_path.parent.mkdir(parents=True, exist_ok=True)
         actual_path.write_text(final_content)
 
-        # Make scripts executable
-        if template_path.startswith("scripts/") and template_path.endswith(".sh"):
+        # Make scripts executable (both scripts/ci and ci_scripts directories)
+        if (template_path.startswith("scripts/") or template_path.startswith("ci_scripts/")) and template_path.endswith(".sh"):
             actual_path.chmod(0o755)
 
-    # Create CLAUDE.md symlink in root directory pointing to AGENTS.md
-    claude_md = root_path / "CLAUDE.md"
+    # Create CLAUDE.md symlink pointing to AGENTS.md
+    claude_md = project_path / "CLAUDE.md"
     if not claude_md.exists():
         claude_md.symlink_to("AGENTS.md")
 
@@ -1412,13 +1642,12 @@ def create_project(
     (project_path / "fastlane" / "metadata" / "en-US" / ".gitkeep").touch()
 
     print(f"\nProject created successfully!")
-    print(f"  AGENTS.md/CLAUDE.md: {root_path.absolute()}")
-    print(f"  Project source code: {project_path.absolute()}")
+    print(f"  Project directory: {project_path.absolute()}")
     print("\nNext steps:")
-    print(f"  1. cd {name_safe}")
+    print(f"  1. cd {project_path.absolute()}")
     print("  2. tuist generate")
     print(f"  3. open {name_safe}.xcworkspace")
-    print(f"\nSee {name_safe}/README.md for the full setup checklist.")
+    print(f"\nSee README.md for the full setup checklist.")
 
     return project_path
 

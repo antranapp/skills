@@ -47,11 +47,11 @@ If the user doesn't have an Apple Developer account or doesn't know their Team I
 
 1. Ask user for App Name and App Identifier
 2. Ask user for optional Development Team ID (explain how to find it if they don't know)
-3. Run the creation script: `scripts/create_app.py` (from the desired root directory)
-4. Navigate to the project subfolder and run `tuist generate` to create the Xcode workspace
+3. Run the creation script: `scripts/create_app.py` with `--output` pointing to the target directory
+4. Run `tuist generate` in the output directory to create the Xcode workspace
 5. Show the user the README.md with manual setup steps
 
-Note: AGENTS.md and CLAUDE.md are created in the current working directory where the skill is invoked. All source code is generated inside a subfolder named after the project (e.g., `./MyApp/`).
+Note: All project files (including AGENTS.md, CLAUDE.md, Project.swift, Sources/, etc.) are created in a flat structure at the output directory root. This enables Xcode Cloud compatibility.
 
 ### Script Usage
 
@@ -74,52 +74,56 @@ All parameters:
 
 ## Project Structure
 
-The generated project is created in the current working directory where the skill is invoked:
+The generated project uses a flat structure (all files at repository root) for Xcode Cloud compatibility:
 
 ```
-./                          # Current working directory (root)
+{output_dir}/               # Repository root (specified by --output)
 ├── AGENTS.md               # AI agent instructions
 ├── CLAUDE.md -> AGENTS.md  # Symlink for Claude Code
-└── {AppName}/              # Project subfolder with source code
-    ├── Project.swift           # Tuist project definition
-    ├── Tuist.swift             # Tuist configuration
-    ├── README.md               # Setup guide with TODOs
-    ├── .swiftformat            # Code formatting rules
-    ├── .gitignore              # Git ignore patterns
-    ├── Sources/
-    │   ├── App/                # Thin app shell (DI only)
-    │   │   ├── {AppName}App.swift
-    │   │   ├── AppDependencies.swift
-    │   │   └── ContentView.swift
-    │   ├── Core/               # Domain logic, models, protocols
-    │   │   └── Core.swift
-    │   ├── UI/                 # Reusable UI components
-    │   │   └── UI.swift
-    │   └── Features/           # Feature modules with views/viewmodels
-    │       └── Features.swift
-    ├── Resources/
-    │   └── .gitkeep
-    ├── Tests/
-    │   ├── AppTests/           # App integration tests
-    │   ├── AppUITests/         # End-to-end UI tests
-    │   ├── CoreTests/          # Core module unit tests
-    │   ├── UITests/            # UI component tests
-    │   ├── FeaturesTests/      # Feature module tests
-    │   └── SnapshotTests/      # Visual regression tests
-    ├── fastlane/
-    │   ├── Appfile             # App Store Connect config
-    │   ├── Fastfile            # Lane definitions
-    │   ├── Deliverfile         # Deliver settings
-    │   ├── Pluginfile          # Fastlane plugins
-    │   └── metadata/           # App Store metadata
-    └── scripts/ci/
-        ├── run_tests.sh        # iOS unit tests
-        ├── run_tests_macos.sh  # macOS unit tests
-        ├── run_ui_tests.sh     # UI tests with simulator
-        ├── verify_build.sh     # iOS build verification
-        ├── verify_build_macos.sh
-        ├── verify_format.sh    # SwiftFormat check
-        └── verify_tuist_generate.sh
+├── Project.swift           # Tuist project definition
+├── Tuist.swift             # Tuist configuration
+├── README.md               # Setup guide with TODOs
+├── .swiftformat            # Code formatting rules
+├── .gitignore              # Git ignore patterns
+├── Sources/
+│   ├── App/                # Thin app shell (DI only)
+│   │   ├── {AppName}App.swift
+│   │   ├── AppDependencies.swift
+│   │   └── ContentView.swift
+│   ├── Core/               # Domain logic, models, protocols
+│   │   └── Core.swift
+│   ├── UI/                 # Reusable UI components
+│   │   └── UI.swift
+│   └── Features/           # Feature modules with views/viewmodels
+│       └── Features.swift
+├── Resources/
+│   └── .gitkeep
+├── Tests/
+│   ├── AppTests/           # App integration tests
+│   ├── AppUITests/         # End-to-end UI tests
+│   ├── CoreTests/          # Core module unit tests
+│   ├── UITests/            # UI component tests
+│   ├── FeaturesTests/      # Feature module tests
+│   └── SnapshotTests/      # Visual regression tests
+├── fastlane/
+│   ├── Appfile             # App Store Connect config
+│   ├── Fastfile            # Lane definitions
+│   ├── Deliverfile         # Deliver settings
+│   ├── Pluginfile          # Fastlane plugins
+│   └── metadata/
+│       ├── en-US/          # App Store metadata
+│       └── testflight/     # TestFlight release notes
+├── scripts/ci/             # CI helper scripts
+│   ├── run_tests.sh        # iOS unit tests
+│   ├── run_tests_macos.sh  # macOS unit tests
+│   ├── run_ui_tests.sh     # UI tests with simulator
+│   ├── verify_build.sh     # iOS build verification
+│   ├── verify_build_macos.sh
+│   ├── verify_format.sh    # SwiftFormat check
+│   ├── verify_tuist_generate.sh
+│   └── deploy_testflight.sh # TestFlight deployment
+└── ci_scripts/             # Xcode Cloud scripts
+    └── ci_post_clone.sh    # Post-clone setup (installs Tuist, generates workspace)
 ```
 
 ## Architecture Principles
@@ -133,12 +137,11 @@ The generated project enforces:
 
 ## Post-Creation Setup
 
-The generated README.md (inside the project subfolder) includes these manual steps:
+The generated README.md includes these manual steps:
 
 ### Required Steps
-- [ ] Navigate to project subfolder: `cd {AppName}`
 - [ ] Run `tuist generate` to create workspace
-- [ ] Update `DEVELOPMENT_TEAM` in `{AppName}/Project.swift` (if not set during creation)
+- [ ] Update `DEVELOPMENT_TEAM` in `Project.swift` (if not set during creation)
 
 ### Code Signing
 Automatic signing is pre-configured for all targets. Once you set your `DEVELOPMENT_TEAM`, you can deploy directly to physical devices without additional Xcode configuration.
@@ -149,9 +152,52 @@ Automatic signing is pre-configured for all targets. Once you set your `DEVELOPM
 - [ ] Configure Fastlane App Store Connect API key
 - [ ] Add app icons to Resources/Assets.xcassets
 
+## TestFlight Deployment
+
+Deploy to TestFlight using fastlane (requires Fastlane configured with App Store Connect API key):
+
+| Command | Description |
+|---------|-------------|
+| `fastlane ios beta` | Build and upload to TestFlight (bumps build number, runs tests) |
+| `fastlane ios beta_quick` | Quick upload (no version bump, no tests) |
+| `fastlane ios beta skip_tests:true` | Skip tests but still bump version |
+| `fastlane ios bump_build` | Increment build number only |
+| `fastlane ios set_version version:1.2.3` | Set marketing version |
+
+### Changelog
+
+Edit `fastlane/metadata/testflight/release_notes.txt` before deploying. The changelog is automatically included in TestFlight uploads.
+
+### CI Script
+
+Use `./scripts/ci/deploy_testflight.sh` for CI/CD pipelines:
+
+```bash
+./scripts/ci/deploy_testflight.sh              # Full deploy
+./scripts/ci/deploy_testflight.sh --quick      # Quick deploy
+./scripts/ci/deploy_testflight.sh --skip-tests # Skip tests
+```
+
+## Xcode Cloud Support
+
+The project is configured for Xcode Cloud with:
+
+1. **Flat Structure**: All project files at repository root (required for Xcode Cloud to find the workspace)
+2. **Post-Clone Script**: `ci_scripts/ci_post_clone.sh` runs automatically after clone to:
+   - Install Tuist via Homebrew
+   - Run `tuist install` to fetch dependencies
+   - Run `tuist generate` to create the Xcode workspace
+
+### Setting Up Xcode Cloud
+
+1. Open the project in Xcode
+2. Go to **Product → Xcode Cloud → Create Workflow**
+3. Sign in to App Store Connect
+4. Configure your workflow (Xcode Cloud will detect the post-clone script automatically)
+
 ## Axiom Skills Reference
 
-The AGENTS.md file (created in the current working directory) references these Axiom skills for AI agents:
+The AGENTS.md file references these Axiom skills for AI agents:
 
 | Category | Skills |
 |----------|--------|
