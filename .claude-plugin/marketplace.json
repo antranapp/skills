@@ -29,6 +29,16 @@
       "author": {
         "name": "local"
       }
+    },
+    {
+      "name": "generating-test-reports",
+      "source": "./skills/generating-test-reports",
+      "description": "Generates beautiful HTML test reports from Xcode .xcresult bundles. Parses test results, exports all attachments (screenshots, videos). Images are embedded as base64; videos are saved as external files alongside the HTML for reliable playback. Use when the user mentions test report, test results, xcresult, review test output, visualize test artifacts, test summary, or wants an HTML report after running xcodebuild tests.",
+      "strict": false,
+      "version": "\"1.1\"",
+      "author": {
+        "name": "antran"
+      }
     }
   ]
 }
